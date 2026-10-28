@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Choose seats · Reelhouse Cinema</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script defer src="/js/api.js"></script>
+  <script defer src="/js/common.js"></script>
+  <script defer src="/js/seats.js"></script>
+</head>
+<body>
+  <div id="navbar"></div>
+  <main class="page-shell narrow-shell">
+    <header class="page-heading"><p class="eyebrow">YOUR MOVIE NIGHT</p><h1>Choose your seats</h1><p id="show-detail" class="muted"></p></header>
+    <div id="page-message" class="message" role="alert" aria-live="polite"></div>
+    <section class="panel seat-panel">
+      <div class="screen">SCREEN</div>
+      <div id="seat-map" class="seat-map" aria-label="Seat selection" aria-live="polite"></div>
+      <div class="seat-legend">
+        <span><i class="seat-swatch available"></i>Available</span>
+        <span><i class="seat-swatch selected"></i>Selected</span>
+        <span><i class="seat-swatch held"></i>Held</span>
+        <span><i class="seat-swatch booked"></i>Booked</span>
+      </div>
+    </section>
+    <section class="selection-summary">
+      <div><span class="muted">Selected</span><strong id="selected-seats">None</strong></div>
+      <div><span class="muted">Total</span><strong id="total-price">₹0.00</strong></div>
+      <button id="hold-button" class="button button-primary" type="button" disabled>Hold &amp; Pay</button>
+    </section>
+  </main>
+</body>
+</html>

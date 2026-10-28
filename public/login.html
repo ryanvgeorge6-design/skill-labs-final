@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Reelhouse Cinema</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script defer src="/js/api.js"></script>
+  <script defer src="/js/common.js"></script>
+  <script defer src="/js/auth.js"></script>
+</head>
+<body>
+  <div id="navbar"></div>
+  <main class="auth-shell">
+    <form id="auth-form" class="panel auth-card" novalidate>
+      <p class="eyebrow">WELCOME BACK</p>
+      <h1>Sign in</h1>
+      <p class="muted">Pick up where your next movie night begins.</p>
+      <div id="form-message" class="message" role="alert" aria-live="polite"></div>
+      <label>Email address<input name="email" type="email" autocomplete="email" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required minlength="8"></label>
+      <button class="button button-primary button-wide" type="submit">Sign in</button>
+      <p class="form-footnote">New to Reelhouse? <a href="/register.html">Create an account</a></p>
+    </form>
+  </main>
+</body>
+</html>
