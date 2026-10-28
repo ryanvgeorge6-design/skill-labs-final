@@ -1,3 +1,4 @@
+# Movie Ticket Booking System
 # Reelhouse Cinema
 
 Responsive, framework-free movie ticket booking frontend. The pages in `public/` use native HTML, CSS, and JavaScript and call the JSON API with `fetch`.
