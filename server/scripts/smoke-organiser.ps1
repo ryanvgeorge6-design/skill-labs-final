@@ -224,28 +224,17 @@ if ($seatCheckRes.StatusCode -eq 200 -and $seatCheckRes.Body) {
 
 if (-not $seatCount) {
     $serverDir = 'C:\projects\movie-booking\server'
-    $nodeCmd = @'
-require("dotenv").config();
-const path = require("path");
-const mongoose = require("mongoose");
-const Seat = require(path.resolve(process.cwd(), "src", "models", "Seat"));
-const showId = process.argv[2];
-mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    const count = await Seat.countDocuments({ show: new mongoose.Types.ObjectId(showId) });
-    console.log(count);
-    await mongoose.disconnect();
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
-'@
     Push-Location $serverDir
     try {
-        $seatCountText = (& node -e $nodeCmd $showId 2>$null)
-        if ($seatCountText) {
-            $seatCount = [int]$seatCountText.Trim()
+        $nodeOutput = & node "$PSScriptRoot\testhelper.js" count-seats $showId 2>&1
+        if ($nodeOutput) {
+            $nodeText = ($nodeOutput | Out-String).Trim()
+            if ($nodeText -match '^[0-9]+$') {
+                $seatCount = [int]$nodeText
+            }
+            elseif ($nodeText) {
+                Write-Host "HELPER STDERR: $nodeText"
+            }
         }
     }
     finally {
@@ -265,7 +254,7 @@ Test-Result -Name 'PUT /api/organiser/shows as owner' -Expected 200 -Actual $upd
 
 # 10. PUT as second organiser -> 403
 $secondOrgCreateScript = @'
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const User = require("./src/models/user");
@@ -288,7 +277,13 @@ mongoose.connect(process.env.MONGO_URI)
   });
 '@
 $env:SECOND_ORG_EMAIL = $secondOrgEmail
-$secondOrgId = (& node -e $secondOrgCreateScript).Trim()
+Push-Location 'C:\projects\movie-booking\server'
+try {
+    $secondOrgId = (& node "$PSScriptRoot\testhelper.js" create-second-org $secondOrgEmail).Trim()
+}
+finally {
+    Pop-Location
+}
 $secondLoginRes = Invoke-JsonRequest -Method Post -Uri "$base/api/auth/login" -Body @{ email = $secondOrgEmail; password = 'password123' }
 $secondToken = $null
 if ($secondLoginRes.StatusCode -eq 200 -and $secondLoginRes.Body) {
@@ -328,30 +323,13 @@ if (-not $userId) {
 $env:BOOKING_USER_ID = $userId
 $env:BOOKING_SHOW_ID = $showId
 $env:BOOKING_AMOUNT = '200'
-$bookingScript = @'
-require("dotenv").config();
-const mongoose = require("mongoose");
-const Booking = require("./src/models/booking");
-mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    const booking = await Booking.create({
-      user: process.env.BOOKING_USER_ID,
-      show: process.env.BOOKING_SHOW_ID,
-      seats: ["A1"],
-      amount: Number(process.env.BOOKING_AMOUNT),
-      status: "confirmed",
-      paymentStatus: "paid",
-      createdAt: new Date()
-    });
-    console.log(booking._id.toString());
-    await mongoose.disconnect();
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
-'@
-$confirmedBookingId = (& node -e $bookingScript).Trim()
+Push-Location 'C:\projects\movie-booking\server'
+try {
+    $confirmedBookingId = (& node "$PSScriptRoot\testhelper.js" create-booking).Trim()
+}
+finally {
+    Pop-Location
+}
 $deleteWithConfirmedRes = Invoke-JsonRequest -Method Delete -Uri "$base/api/organiser/shows/$showId" -Token $ownerToken
 Test-Result -Name 'DELETE show with confirmed booking' -Expected 409 -Actual $deleteWithConfirmedRes
 
@@ -370,30 +348,13 @@ Test-Result -Name 'GET /api/organiser/dashboard' -Expected 200 -Actual $dashboar
 $env:BOOKING_PENDING_USER_ID = $userId
 $env:BOOKING_PENDING_SHOW_ID = $showId
 $env:BOOKING_PENDING_AMOUNT = '150'
-$pendingScript = @'
-require("dotenv").config();
-const mongoose = require("mongoose");
-const Booking = require("./src/models/booking");
-mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    const booking = await Booking.create({
-      user: process.env.BOOKING_PENDING_USER_ID,
-      show: process.env.BOOKING_PENDING_SHOW_ID,
-      seats: ["A2"],
-      amount: Number(process.env.BOOKING_PENDING_AMOUNT),
-      status: "pending",
-      paymentStatus: "pending",
-      createdAt: new Date()
-    });
-    console.log(booking._id.toString());
-    await mongoose.disconnect();
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
-'@
-$pendingBookingId = (& node -e $pendingScript).Trim()
+Push-Location 'C:\projects\movie-booking\server'
+try {
+    $pendingBookingId = (& node "$PSScriptRoot\testhelper.js" create-pending-booking).Trim()
+}
+finally {
+    Pop-Location
+}
 $dashboardAfterPendingRes = Invoke-JsonRequest -Method Get -Uri "$base/api/organiser/dashboard" -Token $ownerToken
 $dashboardAfterPending = $null
 if ($dashboardAfterPendingRes.Body) {
@@ -407,45 +368,25 @@ Test-Result -Name 'pending booking does not change dashboard' -Expected 200 -Act
 }
 
 # 14. Cleanup: delete bookings, delete show, delete second organiser and movie
-$cleanupBookingScript = @'
-require("dotenv").config();
-const mongoose = require("mongoose");
-const Booking = require("./src/models/booking");
-const showId = process.env.BOOKING_SHOW_ID;
-mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    await Booking.deleteMany({ show: showId });
-    console.log("ok");
-    await mongoose.disconnect();
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
-'@
 $env:BOOKING_SHOW_ID = $showId
-& node -e $cleanupBookingScript | Out-Null
+Push-Location 'C:\projects\movie-booking\server'
+try {
+    & node "$PSScriptRoot\testhelper.js" delete-bookings $showId | Out-Null
+}
+finally {
+    Pop-Location
+}
 
 $deleteShowAfterCleanupRes = Invoke-JsonRequest -Method Delete -Uri "$base/api/organiser/shows/$showId" -Token $ownerToken
 Test-Result -Name 'DELETE show after cleanup' -Expected 200 -Actual $deleteShowAfterCleanupRes
 
-$seatAfterDeleteScript = @'
-require("dotenv").config();
-const mongoose = require("mongoose");
-const Seat = require("./src/models/seat");
-const showId = process.argv[2];
-mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    const count = await Seat.countDocuments({ show: new mongoose.Types.ObjectId(showId) });
-    console.log(count);
-    await mongoose.disconnect();
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
-'@
-$seatAfterDelete = (& node -e $seatAfterDeleteScript $showId).Trim()
+Push-Location 'C:\projects\movie-booking\server'
+try {
+    $seatAfterDelete = (& node "$PSScriptRoot\testhelper.js" count-seats $showId).Trim()
+}
+finally {
+    Pop-Location
+}
 $seatAfterDeleteValue = [int]$seatAfterDelete
 Test-Result -Name 'show seats removed after delete' -Expected 0 -Actual ([PSCustomObject]@{ StatusCode = if ($seatAfterDeleteValue -eq 0) { 200 } else { 500 }; Body = '' }) -Check {
     param($json)
@@ -455,23 +396,13 @@ Test-Result -Name 'show seats removed after delete' -Expected 0 -Actual ([PSCust
 $deleteMovieRes = Invoke-JsonRequest -Method Delete -Uri "$base/api/organiser/movies/$movieId" -Token $ownerToken
 Test-Result -Name 'DELETE test movie' -Expected 200 -Actual $deleteMovieRes
 
-$deleteSecondOrgScript = @'
-require("dotenv").config();
-const mongoose = require("mongoose");
-const User = require("./src/models/user");
-const email = process.env.SECOND_ORG_EMAIL;
-mongoose.connect(process.env.MONGO_URI)
-  .then(async () => {
-    await User.deleteOne({ email });
-    console.log("ok");
-    await mongoose.disconnect();
-  })
-  .catch((err) => {
-    console.error(err.message);
-    process.exit(1);
-  });
-'@
 $env:SECOND_ORG_EMAIL = $secondOrgEmail
-& node -e $deleteSecondOrgScript | Out-Null
+Push-Location 'C:\projects\movie-booking\server'
+try {
+    & node "$PSScriptRoot\testhelper.js" delete-second-org $secondOrgEmail | Out-Null
+}
+finally {
+    Pop-Location
+}
 
 Write-Host 'ORGANISER SMOKE SCRIPT COMPLETE'
