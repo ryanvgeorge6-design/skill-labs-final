@@ -1,7 +1,6 @@
 const Seat = require('../models/Seat');
 const Booking = require('../models/Booking');
-
-const HOLD_MINUTES = 5;
+const { HOLD_MINUTES } = require('../config/booking');
 
 async function releaseHeldSeats(bookingId) {
   // Match held seats by booking so retries cannot release unrelated seats.
