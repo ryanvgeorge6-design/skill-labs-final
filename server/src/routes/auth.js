@@ -1,42 +1,71 @@
-const express = require('express');
-const rateLimit = require('express-rate-limit');
-const { body } = require('express-validator');
-const { register, login, me } = require('../controllers/authcontroller');
-const { requireAuth } = require('../middleware/auth');
-const validate = require('../middleware/validate');
+const router = require('express').Router();
 
-const router = express.Router();
+const users = [
+  {
+    id: 1,
+    name: 'Demo User',
+    email: 'demo@reelhouse.com',
+    password: 'demo123',
+    role: 'customer'
+  }
+];
 
-router.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test'
-}));
+router.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'auth' });
+});
 
-router.post(
-  '/register',
-  [
-    body('name').trim().isLength({ min: 2, max: 80 }).withMessage('Name must be 2 to 80 characters long'),
-    body('email').isEmail().withMessage('Please provide a valid email'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-    body('role').optional().isIn(['user', 'organiser']).withMessage('Role must be user or organiser')
-  ],
-  validate,
-  register
-);
+router.post('/register', (req, res) => {
+  const { name, email, password } = req.body || {};
 
-router.post(
-  '/login',
-  [
-    body('email').isEmail().withMessage('Please provide a valid email'),
-    body('password').notEmpty().withMessage('Password is required')
-  ],
-  validate,
-  login
-);
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email, and password are required.' });
+  }
 
-router.get('/me', requireAuth, me);
+  const exists = users.some((user) => user.email.toLowerCase() === email.toLowerCase());
+  if (exists) {
+    return res.status(409).json({ message: 'User already exists.' });
+  }
+
+  const newUser = {
+    id: Date.now(),
+    name,
+    email,
+    password,
+    role: 'customer'
+  };
+
+  users.push(newUser);
+
+  return res.status(201).json({
+    message: 'Account created successfully.',
+    user: { id: newUser.id, name, email, role: 'customer' },
+    token: 'demo-token-' + newUser.id
+  });
+});
+
+router.post('/login', (req, res) => {
+  const { email, password } = req.body || {};
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required.' });
+  }
+
+  const user = users.find((item) => item.email.toLowerCase() === email.toLowerCase() && item.password === password);
+
+  if (!user) {
+    return res.status(401).json({ message: 'Invalid email or password.' });
+  }
+
+  return res.json({
+    message: 'Login successful',
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    },
+    token: 'demo-token-' + user.id
+  });
+});
 
 module.exports = router;

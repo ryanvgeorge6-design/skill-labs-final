@@ -1,24 +1,626 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101014">
-  <title>Reelhouse Cinema</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <script defer src="/js/api.js"></script>
-  <script defer src="/js/common.js"></script>
-</head>
-<body>
-  <div id="navbar"></div>
-  <main class="hero-shell">
-    <section class="hero">
-      <p class="eyebrow">YOUR NEXT GREAT NIGHT OUT</p>
-      <h1>Big stories.<br><span>Better seats.</span></h1>
-      <p class="hero-copy">Discover what’s showing and book your place at the movies.</p>
-      <a class="button button-primary" href="/movies.html">Explore movies</a>
-    </section>
-  </main>
-  <footer class="site-footer">Reelhouse Cinema <span>·</span> Made for movie nights</footer>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f1417" />
+    <title>ReelHouse Cinema | Movie Booking</title>
+    <style>
+      :root {
+        --bg: #0d1216;
+        --bg-soft: #141d24;
+        --panel: rgba(18, 24, 30, 0.88);
+        --panel-alt: rgba(23, 31, 37, 0.96);
+        --text: #f3efe9;
+        --muted: #b2a698;
+        --accent: #d5b884;
+        --accent-strong: #c39d5c;
+        --accent-soft: rgba(213, 184, 132, 0.16);
+        --success: #9eaf97;
+        --shadow: rgba(0, 0, 0, 0.32);
+        --line: rgba(255, 255, 255, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(213, 184, 132, 0.12), transparent 24%),
+          radial-gradient(circle at bottom right, rgba(155, 131, 91, 0.10), transparent 20%),
+          linear-gradient(135deg, #0c1014, #121a20 40%, #0d1418);
+        color: var(--text);
+      }
+
+      .shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(12, 17, 21, 0.82);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 14px 20px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+        position: sticky;
+        top: 16px;
+        backdrop-filter: blur(10px);
+        z-index: 10;
+      }
+
+      .brand {
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .brand span {
+        color: var(--accent);
+      }
+
+      nav {
+        display: flex;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 0.96rem;
+      }
+
+      nav a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .nav-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #1a120d;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .auth-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(7, 10, 15, 0.72);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+
+      .auth-modal.open {
+        display: flex;
+      }
+
+      .auth-box {
+        background: rgba(17, 23, 29, 0.98);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 24px;
+        width: min(420px, calc(100vw - 32px));
+        padding: 24px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.42);
+      }
+
+      .auth-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 18px;
+        background: rgba(255,255,255,0.03);
+        padding: 6px;
+        border-radius: 12px;
+      }
+
+      .auth-tab {
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .auth-tab.active {
+        background: var(--accent-soft);
+        color: var(--text);
+      }
+
+      .auth-form {
+        display: none;
+        gap: 12px;
+      }
+
+      .auth-form.active {
+        display: grid;
+      }
+
+      .auth-close {
+        float: right;
+        font-size: 1.4rem;
+        background: transparent;
+        color: var(--muted);
+        border: none;
+        cursor: pointer;
+      }
+
+      .hero {
+        margin-top: 30px;
+        padding: 32px;
+        background: linear-gradient(135deg, rgba(213, 184, 132, 0.10), rgba(255, 255, 255, 0.02));
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 24px;
+        align-items: center;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+      }
+
+      h1 {
+        margin: 14px 0 10px;
+        font-size: clamp(2.3rem, 4vw, 4rem);
+        line-height: 1.03;
+      }
+
+      .hero p {
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.7;
+        max-width: 560px;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .primary-btn,
+      .secondary-btn {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #17120d;
+      }
+
+      .secondary-btn {
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .mini-card {
+        background: rgba(14, 20, 24, 0.78);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 22px;
+      }
+
+      .mini-card h3 {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .mini-card .big {
+        display: block;
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: var(--accent);
+      }
+
+      .mini-card p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        margin-top: 28px;
+      }
+
+      .stat {
+        background: rgba(15, 21, 27, 0.9);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 20px;
+        box-shadow: 0 10px 22px var(--shadow);
+      }
+
+      .stat .label {
+        display: block;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .stat .value {
+        font-weight: 800;
+        font-size: 1.9rem;
+      }
+
+      .content-grid {
+        margin-top: 28px;
+        display: grid;
+        grid-template-columns: 1.4fr 0.8fr;
+        gap: 22px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 22px;
+        padding: 24px;
+        box-shadow: 0 10px 25px var(--shadow);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+
+      .movie-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+
+      .movie-card {
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        cursor: pointer;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .movie-card:hover,
+      .movie-card.selected {
+        border-color: rgba(213, 184, 132, 0.9);
+        transform: translateY(-2px);
+      }
+
+      .movie-poster {
+        height: 150px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, rgba(213, 184, 132, 0.9), rgba(135, 108, 72, 0.8));
+        display: grid;
+        place-items: center;
+        font-size: 2.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: rgba(20, 16, 12, 0.92);
+      }
+
+      .movie-card h3 {
+        margin: 0 0 8px;
+        font-size: 1.1rem;
+      }
+
+      .meta {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-bottom: 10px;
+      }
+
+      .price {
+        font-weight: 800;
+        color: var(--success);
+      }
+
+      form {
+        display: grid;
+        gap: 14px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      select,
+      input {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 1rem;
+      }
+
+      .booking-summary {
+        margin-top: 18px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 14px;
+      }
+
+      .booking-summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        color: var(--muted);
+      }
+
+      .booking-summary .total {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        font-weight: 800;
+        color: var(--text);
+      }
+
+      .status {
+        margin-top: 14px;
+        min-height: 24px;
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      .shows-list,
+      .dashboard-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .show-item,
+      .dash-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .show-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .show-item strong {
+        display: block;
+      }
+
+      .show-item span {
+        color: var(--muted);
+      }
+
+      .tag {
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        background: rgba(213, 184, 132, 0.12);
+        color: var(--accent);
+      }
+
+      .dashboard-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .dash-card .label {
+        display: block;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .dash-card .value {
+        font-size: 2rem;
+        font-weight: 800;
+      }
+
+      @media (max-width: 900px) {
+        .hero, .content-grid, .stats-grid, .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        nav {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand"><span>Reel</span>House Cinema</div>
+        <nav>
+          <a href="#" data-scroll="top">Home</a>
+          <a href="#movies" data-scroll="movies">Movies</a>
+          <a href="#shows" data-scroll="shows">Shows</a>
+          <a href="#dashboard" data-scroll="dashboard">Dashboard</a>
+        </nav>
+        <button class="nav-btn" id="loginBtn">Login</button>
+      </header>
+
+      <div class="auth-modal" id="authModal" aria-label="Authentication dialog">
+        <div class="auth-box">
+          <button class="auth-close" id="closeAuthModal" aria-label="Close">×</button>
+          <h2 style="margin:0 0 18px;">Welcome to ReelHouse</h2>
+
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-mode="login">Login</button>
+            <button class="auth-tab" data-mode="signup">Sign Up</button>
+          </div>
+
+          <form class="auth-form active" id="loginForm">
+            <label>
+              Email
+              <input type="email" id="loginEmail" placeholder="you@example.com" required />
+            </label>
+            <label>
+              Password
+              <input type="password" id="loginPassword" placeholder="••••••••" required />
+            </label>
+            <button type="submit" class="primary-btn">Login</button>
+          </form>
+
+          <form class="auth-form" id="signupForm">
+            <label>
+              Full Name
+              <input type="text" id="signupName" placeholder="Your name" required />
+            </label>
+            <label>
+              Email
+              <input type="email" id="signupEmail" placeholder="you@example.com" required />
+            </label>
+            <label>
+              Password
+              <input type="password" id="signupPassword" placeholder="Create password" required />
+            </label>
+            <button type="submit" class="primary-btn">Create Account</button>
+          </form>
+
+          <div class="status" id="authStatus"></div>
+        </div>
+      </div>
+
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Now screening</div>
+          <h1>Reserve tickets for your next big night out at ReelHouse Cinema.</h1>
+          <p>
+            Discover blockbuster films, premium showtimes, and easy seat booking in one polished cinema experience.
+          </p>
+          <div class="hero-actions">
+            <button class="primary-btn" id="jumpToMovies">Book now</button>
+            <button class="secondary-btn" id="jumpToShows">View shows</button>
+          </div>
+        </div>
+
+        <div class="mini-card">
+          <h3>Weekend Special</h3>
+          <span class="big">₹299</span>
+          <p>Flat price on selected movie slots every Friday to Sunday.</p>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <div class="stat">
+          <span class="label">Movies</span>
+          <span class="value" id="movieCount">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Shows</span>
+          <span class="value" id="showCount">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Tickets Booked</span>
+          <span class="value" id="bookingCount">0</span>
+        </div>
+        <div class="stat">
+          <span class="label">Occupancy</span>
+          <span class="value" id="occupancy">0%</span>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel" id="movies">
+          <div class="panel-header">
+            <h2>Now Showing</h2>
+          </div>
+          <div class="movie-grid" id="moviesGrid"></div>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-header">
+            <h2>Book Tickets</h2>
+          </div>
+
+          <form id="bookingForm">
+            <label>
+              Movie
+              <select id="movieSelect"></select>
+            </label>
+
+            <label>
+              Show time
+              <select id="showSelect"></select>
+            </label>
+
+            <label>
+              Number of seats
+              <input id="seatCount" type="number" min="1" max="10" value="2" />
+            </label>
+
+            <div class="booking-summary">
+              <div class="booking-summary-row">
+                <span>Ticket price</span>
+                <span id="ticketPrice">₹0</span>
+              </div>
+              <div class="booking-summary-row">
+                <span>Quantity</span>
+                <span id="summarySeats">2</span>
+              </div>
+              <div class="booking-summary-row total">
+                <span>Total</span>
+                <span id="totalPrice">₹0</span>
+              </div>
+            </div>
+
+            <button class="primary-btn" type="submit">Reserve seats</button>
+          </form>
+
+          <div class="status" id="bookingStatus"></div>
+        </aside>
+      </div>
+
+      <section class="panel" id="shows" style="margin-top: 28px;">
+        <div class="panel-header">
+          <h2>Show Timings</h2>
+        </div>
+        <div class="shows-list" id="showsList"></div>
+      </section>
+
+      <section class="panel" id="dashboard" style="margin-top: 28px;">
+        <div class="panel-header">
+          <h2>Organiser Dashboard</h2>
+        </div>
+        <div class="dashboard-grid" id="dashboardGrid"></div>
+      </section>
+    </div>
+
+    <script src="/js/api.js"></script>
+  </body>
 </html>
