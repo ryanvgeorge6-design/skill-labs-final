@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Organiser dashboard · Reelhouse Cinema</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script defer src="/js/api.js"></script>
+  <script defer src="/js/common.js"></script>
+  <script defer src="/js/organiser.js"></script>
+</head>
+<body>
+  <div id="navbar"></div>
+  <main class="page-shell">
+    <header class="page-heading"><p class="eyebrow">THE BIG PICTURE</p><h1>Organiser dashboard</h1><p class="muted">Manage films, showtimes, and theatre performance.</p></header>
+    <div id="page-message" class="message" role="status" aria-live="polite"></div>
+    <section id="summary-cards" class="summary-grid"></section>
+    <section class="organiser-forms">
+      <form id="movie-form" class="panel form-panel" novalidate>
+        <p class="eyebrow">THE LINEUP</p><h2>Add a movie</h2>
+        <label>Title<input name="title" required minlength="1"></label>
+        <label>Description<textarea name="description" rows="3"></textarea></label>
+        <div class="form-row">
+          <label>Duration (minutes)<input name="duration" type="number" min="1" required></label>
+          <label>Poster URL<input name="posterUrl" type="url"></label>
+        </div>
+        <button class="button button-primary" type="submit">Add movie</button>
+      </form>
+      <form id="show-form" class="panel form-panel" novalidate>
+        <p class="eyebrow">NEXT SCREENING</p><h2>Add a show</h2>
+        <label>Movie<select name="movieId" required><option value="">Choose a movie</option></select></label>
+        <label>Starts at<input name="startsAt" type="datetime-local" required></label>
+        <div class="form-row">
+          <label>Price per seat<input name="price" type="number" min="0" step="0.01" required></label>
+          <label>Capacity<input name="capacity" type="number" min="1" required></label>
+        </div>
+        <button class="button button-primary" type="submit">Add show</button>
+      </form>
+    </section>
+    <section class="table-section">
+      <div class="section-heading"><div><p class="eyebrow">ON THE MARQUEE</p><h2>Shows &amp; performance</h2></div></div>
+      <div class="table-scroll"><table><thead><tr><th>Show</th><th>Booked</th><th>Held</th><th>Available</th><th>Revenue</th><th></th></tr></thead><tbody id="shows-table"></tbody></table></div>
+    </section>
+  </main>
+</body>
+</html>
